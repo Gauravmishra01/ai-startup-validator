@@ -6,7 +6,9 @@ const Dashboard = () => {
   const [ideas, setIdeas] = useState([]);
 
   useEffect(() => {
-    axios.get("http://localhost:5000/ideas").then((res) => setIdeas(res.data));
+    axios
+      .get("https://ai-startup-validator-pol2.onrender.com/ideas")
+      .then((res) => setIdeas(res.data));
   }, []);
 
   return (

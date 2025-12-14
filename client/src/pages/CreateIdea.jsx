@@ -13,7 +13,10 @@ const CreateIdea = () => {
     setLoading(true);
     try {
       // Assuming backend is on port 5000
-      await axios.post("http://localhost:5000/ideas", formData);
+      await axios.post(
+        "https://ai-startup-validator-pol2.onrender.com/ideas",
+        formData
+      );
       navigate("/");
     } catch (error) {
       console.error("Error submitting idea", error);
