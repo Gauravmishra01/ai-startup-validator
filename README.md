@@ -6,7 +6,6 @@ Platform	URL
 🎨 Frontend (Vercel)	https://ai-startup-validator-five.vercel.app/
 
 ⚙️ Backend (Render)	https://ai-startup-validator-pol2.onrender.com/
-
 🧾 GitHub Repository	https://github.com/Gauravmishra01/ai-startup-validator
 🧠 Features
 
@@ -157,3 +156,4 @@ Feel free to open an issue or create a pull request.
 ⭐ Like the project?
 
 If this helped you, please star the repository ⭐ — it motivates future upgrades!
+
