@@ -8,7 +8,7 @@ const IdeaDetails = () => {
 
   useEffect(() => {
     axios
-      .get(`http://localhost:5000/ideas/${id}`)
+      .get(`https://ai-startup-validator-pol2.onrender.com/ideas/${id}`)
       .then((res) => setIdea(res.data));
   }, [id]);
 
