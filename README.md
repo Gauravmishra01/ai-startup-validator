@@ -68,7 +68,7 @@ ai-startup-validator/
 
 - 🟩 **Node.js + Express**
 - 🍃 **MongoDB + Mongoose**
-- 🤖 **Groq LLaMA model API**
+- 🤖 **Any_AI LLaMA model API**
 
 ---
 
