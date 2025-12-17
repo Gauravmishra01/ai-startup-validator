@@ -9,7 +9,7 @@ function App() {
       <div className="min-h-screen bg-gray-50 text-gray-800 font-sans">
         <nav className="p-4 bg-white shadow-sm flex justify-between items-center">
           <Link to="/" className="text-xl font-bold text-blue-600">
-            🚀 ValidatorAI
+            🚀 Validator AI
           </Link>
           <Link
             to="/create"
