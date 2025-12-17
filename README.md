@@ -92,7 +92,7 @@ npm install
 
 # Create `.env` file
 MONGO_URI=your_mongo_connection_string
-GROQ_API_KEY=your_groq_api_key
+AI_API_KEY=your_AI_api_key
 PORT=5000
 
 # Start backend
