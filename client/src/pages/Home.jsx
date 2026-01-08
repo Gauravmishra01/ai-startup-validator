@@ -17,13 +17,13 @@ const Home = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navigate = useNavigate();
 
+  // UPDATED FUNCTION: Passes the idea text to the next page
   const handleStart = () => {
-    navigate("/create");
+    navigate("/create", { state: { initialIdea: idea } });
   };
 
   return (
     <div className="min-h-screen bg-slate-900 text-white font-sans selection:bg-indigo-500 selection:text-white">
-      {/* Navigation */}
       <nav className="fixed w-full z-50 bg-slate-900/80 backdrop-blur-md border-b border-slate-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
@@ -31,15 +31,14 @@ const Home = () => {
               className="flex items-center gap-2 cursor-pointer"
               onClick={() => window.scrollTo(0, 0)}
             >
-              <div className="bg-indigo-600 p-2 rounded-lg">
+              <div className="">
                 <Sparkles className="h-6 w-6 text-white" />
               </div>
               <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-cyan-400">
-                Validator.ai
+                🚀 Validator AI
               </span>
             </div>
 
-            {/* Desktop Menu */}
             <div className="hidden md:flex items-center gap-8">
               <a
                 href="#features"
@@ -61,7 +60,6 @@ const Home = () => {
               </button>
             </div>
 
-            {/* Mobile Menu Button */}
             <button
               className="md:hidden text-slate-300"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -72,7 +70,6 @@ const Home = () => {
         </div>
       </nav>
 
-      {/* Hero Section */}
       <section className="relative pt-32 pb-20 px-4 overflow-hidden">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[500px] bg-indigo-600/20 blur-[120px] rounded-full pointer-events-none" />
 
@@ -106,6 +103,7 @@ const Home = () => {
                 className="flex-1 bg-transparent border-none outline-none text-white px-4 py-3 placeholder-slate-500"
                 value={idea}
                 onChange={(e) => setIdea(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleStart()}
               />
               <button
                 onClick={handleStart}
@@ -118,7 +116,6 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Features Grid */}
       <section id="features" className="py-20 px-4 bg-slate-900">
         <div className="max-w-7xl mx-auto">
           <h2 className="text-3xl font-bold text-center mb-12">
