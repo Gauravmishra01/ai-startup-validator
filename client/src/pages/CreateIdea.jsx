@@ -1,43 +1,64 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 const CreateIdea = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // State for form fields
+  // Form state
   const [startupName, setStartupName] = useState("");
   const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
+  const [analysis, setAnalysis] = useState(null);
 
-  // Checks if data was passed from the Home page
+  // Prefill description if passed from Home page
   useEffect(() => {
-    if (location.state && location.state.initialIdea) {
+    if (location.state?.initialIdea) {
       setDescription(location.state.initialIdea);
     }
-  }, [location]);
+  }, [location.state]);
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
     if (!startupName || !description) {
-      alert("Please fill in both fields");
+      alert("Please fill in all fields");
       return;
     }
 
     setLoading(true);
 
-    // TODO: Replace this with your actual API call to your backend
-    // Example:
-    // const response = await fetch('http://localhost:5000/api/validate', { ... })
+    try {
+      const res = await fetch("http://localhost:5000/api/validate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          title: startupName, // ✅ correct variable
+          description: description,
+        }),
+      });
 
-    console.log("Analyzing:", { startupName, description });
+      if (!res.ok) {
+        throw new Error("Server error");
+      }
 
-    // Simulating a delay for effect
-    setTimeout(() => {
+      const data = await res.json();
+      console.log("AI Data:", data);
+
+      setAnalysis(data);
+
+      // Optional: navigate to result page if ID exists
+      if (data?._id) {
+        navigate(`/idea/${data._id}`);
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      alert("Failed to connect to server. Is it running?");
+    } finally {
       setLoading(false);
-      // Navigate to results page (if you have one)
-      // navigate(`/idea/123`);
-      alert("Analysis Started! (Connect your backend here)");
-    }, 2000);
+    }
   };
 
   return (
@@ -47,45 +68,47 @@ const CreateIdea = () => {
           Validate Startup Idea
         </h2>
 
-        <div className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Startup Name */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Startup Name
             </label>
             <input
               type="text"
-              className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all outline-none"
+              className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none"
               placeholder="e.g. Uber for Cats"
               value={startupName}
               onChange={(e) => setStartupName(e.target.value)}
             />
           </div>
 
+          {/* Description */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               What does it do?
             </label>
             <textarea
-              className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all outline-none h-40 resize-none"
+              className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none h-40 resize-none"
               placeholder="Describe your product, target audience, and problem you are solving..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
             />
           </div>
 
+          {/* Submit */}
           <button
-            onClick={handleSubmit}
+            type="submit"
             disabled={loading}
-            className={`w-full py-3 rounded-lg font-semibold text-white transition-all
-              ${
-                loading
-                  ? "bg-blue-400 cursor-wait"
-                  : "bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-500/30"
-              }`}
+            className={`w-full py-3 rounded-lg font-semibold text-white transition-all ${
+              loading
+                ? "bg-blue-400 cursor-wait"
+                : "bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-500/30"
+            }`}
           >
             {loading ? "Analyzing with AI..." : "Analyze Idea"}
           </button>
-        </div>
+        </form>
       </div>
     </div>
   );
