@@ -1,120 +1,114 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
 
 const CreateIdea = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
+  // Form state
   const [startupName, setStartupName] = useState("");
   const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
+  const [analysis, setAnalysis] = useState(null);
 
-  // 1. Grab data passed from Home page
+  // Prefill description if passed from Home page
   useEffect(() => {
     if (location.state?.initialIdea) {
       setDescription(location.state.initialIdea);
     }
-  }, [location]);
+  }, [location.state]);
 
-  // 2. Handle the submission
-  const handleSubmit = async () => {
-    if (!description) {
-      alert("Please describe your idea first.");
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!startupName || !description) {
+      alert("Please fill in all fields");
       return;
     }
+
     setLoading(true);
 
     try {
-      // REPLACE THIS URL with your actual backend URL
-      // If running locally, it is usually: http://localhost:5000/api/ideas
-      // If deployed on Vercel, use your production backend URL
-      const API_URL =
-        "https://ai-startup-validator-pol2.onrender.com/api/ideas";
-
-      const response = await fetch(API_URL, {
+      const res = await fetch("http://localhost:5000/api/validate", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          title: startupName || "Untitled Idea",
+          title: startupName, // ✅ correct variable
           description: description,
         }),
       });
 
-      const data = await response.json();
+      if (!res.ok) {
+        throw new Error("Server error");
+      }
 
-      if (response.ok) {
-        // Success! Navigate to dashboard to see the new entry
-        navigate("/dashboard");
-      } else {
-        alert("Error analyzing idea: " + (data.message || "Unknown error"));
+      const data = await res.json();
+      console.log("AI Data:", data);
+
+      setAnalysis(data);
+
+      // Optional: navigate to result page if ID exists
+      if (data?._id) {
+        navigate(`/idea/${data._id}`);
       }
     } catch (error) {
       console.error("Error:", error);
-      alert(
-        "Failed to connect to the server. Make sure your backend is running!",
-      );
+      alert("Failed to connect to server. Is it running?");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="max-w-2xl mx-auto">
-      <button
-        onClick={() => navigate(-1)}
-        className="mb-6 flex items-center text-gray-500 hover:text-gray-900 transition-colors"
-      >
-        <ArrowLeft className="w-4 h-4 mr-1" /> Back
-      </button>
+    <div className="max-w-2xl mx-auto mt-10">
+      <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100">
+        <h2 className="text-2xl font-bold text-gray-900 mb-6">
+          Validate Startup Idea
+        </h2>
 
-      <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">New Analysis</h1>
-        <p className="text-gray-500 mb-8">
-          Tell us about your startup concept.
-        </p>
-
-        <div className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Startup Name */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Project Name (Optional)
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Startup Name
             </label>
             <input
               type="text"
-              className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all"
-              placeholder="My Awesome Startup"
+              className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none"
+              placeholder="e.g. Uber for Cats"
               value={startupName}
               onChange={(e) => setStartupName(e.target.value)}
             />
           </div>
 
+          {/* Description */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Idea Description <span className="text-red-500">*</span>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              What does it do?
             </label>
             <textarea
-              className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all h-40 resize-none"
-              placeholder="What problem are you solving? Who is it for?"
+              className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none h-40 resize-none"
+              placeholder="Describe your product, target audience, and problem you are solving..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
             />
           </div>
 
+          {/* Submit */}
           <button
-            onClick={handleSubmit}
+            type="submit"
             disabled={loading}
-            className={`w-full py-4 rounded-xl font-bold text-white transition-all
-              ${
-                loading
-                  ? "bg-indigo-300 cursor-not-allowed"
-                  : "bg-indigo-600 hover:bg-indigo-700 shadow-xl shadow-indigo-200"
-              }`}
+            className={`w-full py-3 rounded-lg font-semibold text-white transition-all ${
+              loading
+                ? "bg-blue-400 cursor-wait"
+                : "bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-500/30"
+            }`}
           >
-            {loading ? "Analyzing Market..." : "Run Validation Analysis"}
+            {loading ? "Analyzing with AI..." : "Analyze Idea"}
           </button>
-        </div>
+        </form>
       </div>
     </div>
   );
