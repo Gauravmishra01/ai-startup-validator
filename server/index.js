@@ -25,7 +25,7 @@ mongoose
   .then(() => console.log("MongoDB Connected"))
   .catch((err) => console.error("MongoDB Error:", err));
 
-// --- ROUTES (Now with /api prefix) ---
+// --- ROUTES (Updated with /api prefix) ---
 
 // 1. GET /api/ideas - List all ideas
 app.get("/api/ideas", async (req, res) => {
@@ -77,7 +77,8 @@ app.post("/api/ideas", async (req, res) => {
 
     // --- CALL GROQ API ---
     const completion = await groq.chat.completions.create({
-      model: "openai/gpt-oss-120b", // Using the latest stable Llama model
+      // ✅ FIX: Use a valid Groq model ID (Llama 3.3 is fast & reliable)
+      model: "llama-3.3-70b-versatile",
       messages: [{ role: "user", content: prompt }],
       temperature: 0.3,
     });
@@ -94,7 +95,6 @@ app.post("/api/ideas", async (req, res) => {
       analysisData = JSON.parse(clean);
     } catch (err) {
       console.error("JSON Parse Error. AI Response:", aiText);
-      // Fallback if AI fails to return perfect JSON
       return res.status(500).json({ error: "Failed to parse AI response" });
     }
 
