@@ -5,14 +5,49 @@ import axios from "axios";
 const IdeaDetails = () => {
   const { id } = useParams();
   const [idea, setIdea] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     axios
       .get(`https://ai-startup-validator-pol2.onrender.com/ideas/${id}`)
-      .then((res) => setIdea(res.data));
+      .then((res) => {
+        setIdea(res.data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error("Failed to fetch idea details:", err);
+        setError("Unable to load the idea details. The idea may not exist or the server is unavailable.");
+        setLoading(false);
+      });
   }, [id]);
 
-  if (!idea) return <div>Loading...</div>;
+  if (loading) {
+    return (
+      <div className="text-center py-12">
+        <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <p className="mt-4 text-gray-600">Loading idea details...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-12">
+        <div className="text-red-600 text-xl mb-4">⚠️ Error</div>
+        <p className="text-gray-600">{error}</p>
+      </div>
+    );
+  }
+
+  if (!idea) {
+    return (
+      <div className="text-center py-12">
+        <div className="text-gray-600 text-xl mb-4">🔍 Not Found</div>
+        <p className="text-gray-600">The requested idea could not be found.</p>
+      </div>
+    );
+  }
 
   const analysis = idea?.analysis || {};
 

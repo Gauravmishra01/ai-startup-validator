@@ -43,10 +43,24 @@ const CreateIdea = () => {
         },
       );
 
+      // Check response status first
       if (!res.ok) {
-        throw new Error("Server error");
+        // Try to parse error response
+        let errorData;
+        try {
+          errorData = await res.json();
+        } catch {
+          // If JSON parsing fails, use status text
+          throw new Error(`Server error: ${res.statusText || res.status}`);
+        }
+        
+        // Handle error response from server
+        const errorMessage = errorData.error || "Server error occurred";
+        const errorDetails = errorData.details || "";
+        throw new Error(`${errorMessage}${errorDetails ? ": " + errorDetails : ""}`);
       }
 
+      // Now safely parse successful response
       const data = await res.json();
       console.log("AI Data:", data);
 
@@ -58,7 +72,18 @@ const CreateIdea = () => {
       }
     } catch (error) {
       console.error("Error:", error);
-      alert("Failed to connect to server. Is it running?");
+      
+      // Provide more specific error messages
+      let errorMsg;
+      
+      if (error.message.includes("Failed to fetch") || error.message.includes("NetworkError")) {
+        errorMsg = "Unable to connect to the server. Please check your internet connection or try again later.";
+      } else {
+        // Use the backend error message directly if it's already descriptive
+        errorMsg = error.message || "An unexpected error occurred. Please try again.";
+      }
+      
+      alert(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -76,6 +101,9 @@ const CreateIdea = () => {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Startup Name
+              <span className="text-gray-400 text-xs ml-2">
+                ({startupName.length}/200)
+              </span>
             </label>
             <input
               type="text"
@@ -83,6 +111,7 @@ const CreateIdea = () => {
               placeholder="e.g. Uber for Cats"
               value={startupName}
               onChange={(e) => setStartupName(e.target.value)}
+              maxLength={200}
             />
           </div>
 
@@ -90,12 +119,16 @@ const CreateIdea = () => {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               What does it do?
+              <span className="text-gray-400 text-xs ml-2">
+                ({description.length}/2000)
+              </span>
             </label>
             <textarea
               className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none h-40 resize-none"
               placeholder="Describe your product, target audience, and problem you are solving..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
+              maxLength={2000}
             />
           </div>
 
