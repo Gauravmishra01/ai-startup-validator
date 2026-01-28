@@ -78,7 +78,7 @@ app.post("/api/ideas", async (req, res) => {
     // --- CALL GROQ API ---
     const completion = await groq.chat.completions.create({
       // ✅ FIX: Use a valid Groq model ID (Llama 3.3 is fast & reliable)
-      model: "llama-3.3-70b-versatile",
+      model: "openai/gpt-oss-120b",
       messages: [{ role: "user", content: prompt }],
       temperature: 0.3,
     });
