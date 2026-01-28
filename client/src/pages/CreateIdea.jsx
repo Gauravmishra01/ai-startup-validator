@@ -43,11 +43,15 @@ const CreateIdea = () => {
         },
       );
 
+      const data = await res.json();
+
       if (!res.ok) {
-        throw new Error("Server error");
+        // Handle error response from server
+        const errorMessage = data.error || "Server error occurred";
+        const errorDetails = data.details || "";
+        throw new Error(`${errorMessage}${errorDetails ? ": " + errorDetails : ""}`);
       }
 
-      const data = await res.json();
       console.log("AI Data:", data);
 
       setAnalysis(data);
@@ -58,7 +62,21 @@ const CreateIdea = () => {
       }
     } catch (error) {
       console.error("Error:", error);
-      alert("Failed to connect to server. Is it running?");
+      
+      // Provide more specific error messages
+      let errorMsg = "Failed to analyze your startup idea. ";
+      
+      if (error.message.includes("Failed to fetch") || error.message.includes("NetworkError")) {
+        errorMsg += "Unable to connect to the server. Please check your internet connection or try again later.";
+      } else if (error.message.includes("required")) {
+        errorMsg += error.message;
+      } else if (error.message.includes("AI Analysis Failed")) {
+        errorMsg += "The AI service is temporarily unavailable. Please try again in a moment.";
+      } else {
+        errorMsg += error.message || "An unexpected error occurred. Please try again.";
+      }
+      
+      alert(errorMsg);
     } finally {
       setLoading(false);
     }

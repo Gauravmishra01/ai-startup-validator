@@ -7,7 +7,16 @@ const Idea = require("./models/Idea");
 
 const app = express();
 app.use(express.json());
-app.use(cors());
+
+// Configure CORS to allow requests from Vercel frontend
+const corsOptions = {
+  origin: [
+    "https://ai-startup-validator-five.vercel.app",
+    "http://localhost:5173", // for local development
+  ],
+  optionsSuccessStatus: 200,
+};
+app.use(cors(corsOptions));
 
 app.get("/", (req, res) => {
   res.send("🚀 AI Startup Validator Backend is Running!");
@@ -25,6 +34,84 @@ mongoose
   .catch((err) => console.error(err));
 
 // --- ROUTES ---
+
+// API validation endpoint (used by frontend)
+app.post("/api/validate", async (req, res) => {
+  const { title, description, startupName } = req.body;
+
+  // Accept both 'title' and 'startupName' for backwards compatibility
+  const ideaTitle = title || startupName;
+
+  if (!ideaTitle || !description) {
+    return res.status(400).json({ 
+      error: "Both startup name/title and description are required",
+      missingFields: {
+        title: !ideaTitle,
+        description: !description
+      }
+    });
+  }
+
+  try {
+    const prompt = `
+      You are an expert startup consultant. Analyze the startup idea below and return a structured JSON object.
+
+      Input: { "title": "${ideaTitle}", "description": "${description}" }
+
+      Output JSON Fields:
+      - problem (string)
+      - customer (persona)
+      - market (short overview)
+      - competitors (3 competitors, each with name + difference)
+      - tech_stack (4-6 recommended techs)
+      - risk_level (Low / Medium / High)
+      - profitability_score (0-100)
+      - justification (brief reasoning)
+
+      RETURN ONLY RAW JSON. NO MARKDOWN.
+    `;
+
+    // --- CALL GROQ API ---
+    const completion = await groq.chat.completions.create({
+      model: "openai/gpt-oss-120b", // ✅ Stable Groq model
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.3,
+    });
+
+    const aiText = completion.choices[0].message.content.trim();
+
+    let analysisData;
+    try {
+      const clean = aiText
+        .replace(/```json/g, "")
+        .replace(/```/g, "")
+        .trim();
+      analysisData = JSON.parse(clean);
+    } catch (err) {
+      console.error("JSON Parse Error:\n", aiText);
+      return res.status(500).json({ 
+        error: "Failed to parse AI response",
+        details: "The AI returned an invalid format. Please try again."
+      });
+    }
+
+    // Save to DB
+    const newIdea = new Idea({
+      title: ideaTitle,
+      description,
+      analysis: analysisData,
+    });
+
+    await newIdea.save();
+    res.status(201).json(newIdea);
+  } catch (err) {
+    console.error("Groq Error:", err);
+    res.status(500).json({ 
+      error: "AI Analysis Failed",
+      details: err.message || "Unable to analyze the startup idea. Please try again."
+    });
+  }
+});
 
 // 1. GET /ideas - List all ideas
 app.get("/ideas", async (req, res) => {
