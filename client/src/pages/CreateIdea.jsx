@@ -74,16 +74,13 @@ const CreateIdea = () => {
       console.error("Error:", error);
       
       // Provide more specific error messages
-      let errorMsg = "Failed to analyze your startup idea. ";
+      let errorMsg;
       
       if (error.message.includes("Failed to fetch") || error.message.includes("NetworkError")) {
-        errorMsg += "Unable to connect to the server. Please check your internet connection or try again later.";
-      } else if (error.message.includes("required")) {
-        errorMsg += error.message;
-      } else if (error.message.includes("AI Analysis Failed")) {
-        errorMsg += "The AI service is temporarily unavailable. Please try again in a moment.";
+        errorMsg = "Unable to connect to the server. Please check your internet connection or try again later.";
       } else {
-        errorMsg += error.message || "An unexpected error occurred. Please try again.";
+        // Use the backend error message directly if it's already descriptive
+        errorMsg = error.message || "An unexpected error occurred. Please try again.";
       }
       
       alert(errorMsg);

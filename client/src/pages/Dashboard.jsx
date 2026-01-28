@@ -56,15 +56,21 @@ const Dashboard = () => {
                   {idea.description}
                 </p>
                 <div className="mt-4 flex justify-between items-center">
-                  <span
-                    className={`px-2 py-1 rounded text-xs font-bold ${
-                      idea.analysis.profitability_score > 70
-                        ? "bg-green-100 text-green-800"
-                        : "bg-yellow-100 text-yellow-800"
-                    }`}
-                  >
-                    Score: {idea.analysis.profitability_score}/100
-                  </span>
+                  {idea.analysis?.profitability_score !== undefined ? (
+                    <span
+                      className={`px-2 py-1 rounded text-xs font-bold ${
+                        idea.analysis.profitability_score > 70
+                          ? "bg-green-100 text-green-800"
+                          : "bg-yellow-100 text-yellow-800"
+                      }`}
+                    >
+                      Score: {idea.analysis.profitability_score}/100
+                    </span>
+                  ) : (
+                    <span className="px-2 py-1 rounded text-xs font-bold bg-gray-100 text-gray-600">
+                      Processing...
+                    </span>
+                  )}
                   <span className="text-sm text-gray-400">
                     {new Date(idea.createdAt).toLocaleDateString()}
                   </span>
