@@ -25,13 +25,40 @@ const CreateIdea = () => {
     }
     setLoading(true);
 
-    // Simulate API call delay
-    setTimeout(() => {
+    try {
+      // REPLACE THIS URL with your actual backend URL
+      // If running locally, it is usually: http://localhost:5000/api/ideas
+      // If deployed on Vercel, use your production backend URL
+      const API_URL =
+        "https://ai-startup-validator-pol2.onrender.com/api/ideas";
+
+      const response = await fetch(API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          title: startupName || "Untitled Idea",
+          description: description,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // Success! Navigate to dashboard to see the new entry
+        navigate("/dashboard");
+      } else {
+        alert("Error analyzing idea: " + (data.message || "Unknown error"));
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      alert(
+        "Failed to connect to the server. Make sure your backend is running!",
+      );
+    } finally {
       setLoading(false);
-      // For now, redirect to Dashboard or a Details page
-      alert("Idea Submitted for Analysis!");
-      navigate("/dashboard");
-    }, 1500);
+    }
   };
 
   return (
