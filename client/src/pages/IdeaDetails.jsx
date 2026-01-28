@@ -10,7 +10,8 @@ import {
   Code, 
   AlertTriangle,
   CheckCircle,
-  ArrowLeft
+  ArrowLeft,
+  Building2
 } from "lucide-react";
 import Breadcrumb from "../components/Breadcrumb";
 
@@ -56,7 +57,7 @@ const IdeaDetails = () => {
 
   if (!idea) {
     return (
-      <div className="text-center py-12">
+      <div className="text-center py-12" role="status">
         <div className="text-gray-600 dark:text-gray-400 text-xl mb-4">🔍 Not Found</div>
         <p className="text-gray-600 dark:text-gray-400">The requested idea could not be found.</p>
       </div>
@@ -183,7 +184,7 @@ const IdeaDetails = () => {
             <div className="border-t border-gray-200 dark:border-gray-700 pt-8">
               <div className="flex items-center gap-3 mb-4">
                 <div className="p-2 bg-primary-100 dark:bg-primary-900/30 rounded-lg">
-                  <Target className="w-5 h-5 text-primary-600 dark:text-primary-400" aria-hidden="true" />
+                  <Building2 className="w-5 h-5 text-primary-600 dark:text-primary-400" aria-hidden="true" />
                 </div>
                 <h3 className="font-bold text-xl text-gray-900 dark:text-white">Competitors</h3>
               </div>

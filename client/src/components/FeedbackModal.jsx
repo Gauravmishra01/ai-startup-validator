@@ -84,14 +84,14 @@ const FeedbackModal = () => {
 
             {/* Success Message */}
             {submitStatus === 'success' && (
-              <div className="mb-4 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg text-green-800 dark:text-green-200">
+              <div className="mb-4 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg text-green-800 dark:text-green-200" role="status" aria-live="polite">
                 ✓ Thank you! Your feedback has been submitted.
               </div>
             )}
 
             {/* Error Message */}
             {submitStatus === 'error' && (
-              <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-800 dark:text-red-200">
+              <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-800 dark:text-red-200" role="alert" aria-live="assertive">
                 ✗ Failed to submit feedback. Please try again.
               </div>
             )}
@@ -138,6 +138,8 @@ const FeedbackModal = () => {
                 type="submit"
                 disabled={isSubmitting}
                 className="w-full bg-primary-600 hover:bg-primary-700 disabled:bg-gray-400 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
+                aria-label={isSubmitting ? "Submitting feedback" : "Submit feedback"}
+                aria-disabled={isSubmitting}
               >
                 {isSubmitting ? (
                   <>

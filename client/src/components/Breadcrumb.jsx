@@ -4,7 +4,7 @@ import { ChevronRight, Home } from 'lucide-react';
 const Breadcrumb = ({ items }) => {
   return (
     <nav aria-label="Breadcrumb" className="mb-6">
-      <ol className="flex items-center space-x-2 text-sm">
+      <ol className="flex items-center space-x-2 text-sm flex-wrap">
         <li>
           <Link 
             to="/"
@@ -21,12 +21,13 @@ const Breadcrumb = ({ items }) => {
             {item.href ? (
               <Link
                 to={item.href}
-                className="text-gray-500 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+                className="text-gray-500 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors truncate max-w-[200px]"
+                title={item.label}
               >
                 {item.label}
               </Link>
             ) : (
-              <span className="text-gray-900 dark:text-white font-medium">
+              <span className="text-gray-900 dark:text-white font-medium truncate max-w-[200px]" title={item.label}>
                 {item.label}
               </span>
             )}
