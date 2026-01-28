@@ -1,40 +1,40 @@
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-  Link,
-  useLocation,
-} from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
 import Dashboard from "./pages/Dashboard";
 import IdeaDetails from "./pages/IdeaDetails";
 import CreateIdea from "./pages/CreateIdea";
-import Home from "./pages/Home"; // Import the new Home page
+import Home from "./pages/Home";
 
-// This component wraps the internal app pages (Dashboard, Create, etc)
-// to give them the white navbar and container.
+// A wrapper layout for the functional pages (Dashboard, Create, etc.)
 const AppLayout = ({ children }) => {
   return (
     <div className="min-h-screen bg-gray-50 text-gray-800 font-sans">
-      <nav className="p-4 bg-white shadow-sm flex justify-between items-center">
-        <Link to="/" className="text-xl font-bold text-blue-600">
-          🚀 Validator AI
-        </Link>
-        <div className="flex gap-4">
-          <Link
-            to="/dashboard"
-            className="px-4 py-2 text-gray-600 hover:text-blue-600"
-          >
-            Dashboard
-          </Link>
-          <Link
-            to="/create"
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-          >
-            + New Idea
-          </Link>
+      <nav className="bg-white border-b border-gray-200 sticky top-0 z-50">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between h-16 items-center">
+            <Link
+              to="/"
+              className="text-xl font-bold text-indigo-600 flex items-center gap-2"
+            >
+              🚀 Validator.ai
+            </Link>
+            <div className="flex gap-4">
+              <Link
+                to="/dashboard"
+                className="px-3 py-2 text-sm font-medium text-gray-600 hover:text-indigo-600"
+              >
+                Dashboard
+              </Link>
+              <Link
+                to="/create"
+                className="px-4 py-2 text-sm font-medium bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+              >
+                + New Idea
+              </Link>
+            </div>
+          </div>
         </div>
       </nav>
-      <div className="max-w-4xl mx-auto p-6">{children}</div>
+      <main className="max-w-5xl mx-auto p-6">{children}</main>
     </div>
   );
 };
@@ -43,10 +43,10 @@ function App() {
   return (
     <Router>
       <Routes>
-        {/* Public Home Page - Full Screen Dark Mode */}
+        {/* The Home Page (Full Screen / Dark Mode) */}
         <Route path="/" element={<Home />} />
 
-        {/* Protected App Pages - Wrapped in AppLayout */}
+        {/* The App Pages (Wrapped in the white layout) */}
         <Route
           path="/dashboard"
           element={
