@@ -29,16 +29,19 @@ const CreateIdea = () => {
     setLoading(true);
 
     try {
-      const res = await fetch("http://localhost:5000/api/validate", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      const res = await fetch(
+        "https://ai-startup-validator-pol2.onrender.com/api/validate",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            title: startupName, // ✅ correct variable
+            description: description,
+          }),
         },
-        body: JSON.stringify({
-          title: startupName, // ✅ correct variable
-          description: description,
-        }),
-      });
+      );
 
       if (!res.ok) {
         throw new Error("Server error");
