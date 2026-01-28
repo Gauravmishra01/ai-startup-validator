@@ -9,6 +9,7 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
+// Default Route
 app.get("/", (req, res) => {
   res.send("🚀 AI Startup Validator Backend is Running!");
 });
@@ -22,12 +23,12 @@ const groq = new Groq({
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB Connected"))
-  .catch((err) => console.error(err));
+  .catch((err) => console.error("MongoDB Error:", err));
 
-// --- ROUTES ---
+// --- ROUTES (Now with /api prefix) ---
 
-// 1. GET /ideas - List all ideas
-app.get("/ideas", async (req, res) => {
+// 1. GET /api/ideas - List all ideas
+app.get("/api/ideas", async (req, res) => {
   try {
     const ideas = await Idea.find().sort({ createdAt: -1 });
     res.json(ideas);
@@ -36,8 +37,8 @@ app.get("/ideas", async (req, res) => {
   }
 });
 
-// 2. GET /ideas/:id - Get single idea details
-app.get("/ideas/:id", async (req, res) => {
+// 2. GET /api/ideas/:id - Get single idea
+app.get("/api/ideas/:id", async (req, res) => {
   try {
     const idea = await Idea.findById(req.params.id);
     if (!idea) return res.status(404).json({ error: "Idea not found" });
@@ -47,8 +48,8 @@ app.get("/ideas/:id", async (req, res) => {
   }
 });
 
-// 3. POST /ideas - Analyze using Groq + Save
-app.post("/ideas", async (req, res) => {
+// 3. POST /api/ideas - Analyze using Groq + Save
+app.post("/api/ideas", async (req, res) => {
   const { title, description } = req.body;
 
   if (!title || !description) {
@@ -58,9 +59,9 @@ app.post("/ideas", async (req, res) => {
   try {
     const prompt = `
       You are an expert startup consultant. Analyze the startup idea below and return a structured JSON object.
-
+      
       Input: { "title": "${title}", "description": "${description}" }
-
+      
       Output JSON Fields:
       - problem (string)
       - customer (persona)
@@ -70,19 +71,20 @@ app.post("/ideas", async (req, res) => {
       - risk_level (Low / Medium / High)
       - profitability_score (0-100)
       - justification (brief reasoning)
-
-      RETURN ONLY RAW JSON. NO MARKDOWN.
+      
+      RETURN ONLY RAW JSON. NO MARKDOWN. NO CODE BLOCKS.
     `;
 
     // --- CALL GROQ API ---
     const completion = await groq.chat.completions.create({
-      model: "openai/gpt-oss-120b", // ✅ Stable Groq model
+      model: "openai/gpt-oss-120b", // Using the latest stable Llama model
       messages: [{ role: "user", content: prompt }],
       temperature: 0.3,
     });
 
     const aiText = completion.choices[0].message.content.trim();
-
+    
+    // Improved JSON cleaning to prevent crashes
     let analysisData;
     try {
       const clean = aiText
@@ -91,7 +93,8 @@ app.post("/ideas", async (req, res) => {
         .trim();
       analysisData = JSON.parse(clean);
     } catch (err) {
-      console.error("JSON Parse Error:\n", aiText);
+      console.error("JSON Parse Error. AI Response:", aiText);
+      // Fallback if AI fails to return perfect JSON
       return res.status(500).json({ error: "Failed to parse AI response" });
     }
 
@@ -104,19 +107,10 @@ app.post("/ideas", async (req, res) => {
 
     await newIdea.save();
     res.status(201).json(newIdea);
-  } catch (err) {
-    console.error("Groq Error:", err);
-    res.status(500).json({ error: "AI Analysis Failed" });
-  }
-});
 
-// 4. DELETE /ideas/:id
-app.delete("/ideas/:id", async (req, res) => {
-  try {
-    await Idea.findByIdAndDelete(req.params.id);
-    res.json({ message: "Deleted" });
   } catch (err) {
-    res.status(500).json({ error: "Delete failed" });
+    console.error("Groq/Server Error:", err);
+    res.status(500).json({ error: "AI Analysis Failed: " + err.message });
   }
 });
 
