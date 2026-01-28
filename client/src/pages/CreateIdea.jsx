@@ -43,15 +43,25 @@ const CreateIdea = () => {
         },
       );
 
-      const data = await res.json();
-
+      // Check response status first
       if (!res.ok) {
+        // Try to parse error response
+        let errorData;
+        try {
+          errorData = await res.json();
+        } catch {
+          // If JSON parsing fails, use status text
+          throw new Error(`Server error: ${res.statusText || res.status}`);
+        }
+        
         // Handle error response from server
-        const errorMessage = data.error || "Server error occurred";
-        const errorDetails = data.details || "";
+        const errorMessage = errorData.error || "Server error occurred";
+        const errorDetails = errorData.details || "";
         throw new Error(`${errorMessage}${errorDetails ? ": " + errorDetails : ""}`);
       }
 
+      // Now safely parse successful response
+      const data = await res.json();
       console.log("AI Data:", data);
 
       setAnalysis(data);
@@ -94,6 +104,9 @@ const CreateIdea = () => {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Startup Name
+              <span className="text-gray-400 text-xs ml-2">
+                ({startupName.length}/200)
+              </span>
             </label>
             <input
               type="text"
@@ -101,6 +114,7 @@ const CreateIdea = () => {
               placeholder="e.g. Uber for Cats"
               value={startupName}
               onChange={(e) => setStartupName(e.target.value)}
+              maxLength={200}
             />
           </div>
 
@@ -108,12 +122,16 @@ const CreateIdea = () => {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               What does it do?
+              <span className="text-gray-400 text-xs ml-2">
+                ({description.length}/2000)
+              </span>
             </label>
             <textarea
               className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none h-40 resize-none"
               placeholder="Describe your product, target audience, and problem you are solving..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
+              maxLength={2000}
             />
           </div>
 

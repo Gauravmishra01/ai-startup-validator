@@ -52,11 +52,37 @@ app.post("/api/validate", async (req, res) => {
     });
   }
 
+  // Validate input lengths to prevent abuse and API token limit issues
+  if (ideaTitle.length > 200) {
+    return res.status(400).json({
+      error: "Startup name/title is too long",
+      details: "Please limit the title to 200 characters or less"
+    });
+  }
+
+  if (description.length > 2000) {
+    return res.status(400).json({
+      error: "Description is too long",
+      details: "Please limit the description to 2000 characters or less"
+    });
+  }
+
+  // Sanitize input to prevent prompt injection
+  const sanitize = (str) => {
+    return str
+      .replace(/[<>]/g, '') // Remove angle brackets
+      .replace(/["'`]/g, '') // Remove quotes that could break the prompt
+      .substring(0, 2000); // Additional safety limit
+  };
+
+  const sanitizedTitle = sanitize(ideaTitle);
+  const sanitizedDescription = sanitize(description);
+
   try {
     const prompt = `
       You are an expert startup consultant. Analyze the startup idea below and return a structured JSON object.
 
-      Input: { "title": "${ideaTitle}", "description": "${description}" }
+      Input: { "title": "${sanitizedTitle}", "description": "${sanitizedDescription}" }
 
       Output JSON Fields:
       - problem (string)
@@ -106,9 +132,10 @@ app.post("/api/validate", async (req, res) => {
     res.status(201).json(newIdea);
   } catch (err) {
     console.error("Groq Error:", err);
+    // Log full error for debugging, but send sanitized error to client
     res.status(500).json({ 
       error: "AI Analysis Failed",
-      details: err.message || "Unable to analyze the startup idea. Please try again."
+      details: "Unable to analyze the startup idea. Please try again later."
     });
   }
 });
