@@ -24,8 +24,8 @@ const Home = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 text-white font-sans selection:bg-primary-500 selection:text-white">
-      <nav className="fixed w-full z-50 bg-slate-900/80 backdrop-blur-md border-b border-slate-800" role="navigation" aria-label="Main navigation">
+    <div className="min-h-screen bg-white text-gray-900 font-sans">
+      <nav className="fixed w-full z-50 bg-white border-b border-gray-200 shadow-sm" role="navigation" aria-label="Main navigation">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <button
@@ -34,9 +34,9 @@ const Home = () => {
               aria-label="Scroll to top"
             >
               <div className="">
-                <Sparkles className="h-6 w-6 text-white" aria-hidden="true" />
+                <Sparkles className="h-6 w-6 text-primary-600" aria-hidden="true" />
               </div>
-              <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary-400 to-accent-400">
+              <span className="text-xl font-bold text-primary-600">
                 🚀 Validator AI
               </span>
             </button>
@@ -44,21 +44,21 @@ const Home = () => {
             <div className="hidden md:flex items-center gap-6">
               <a
                 href="#features"
-                className="text-slate-400 hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-slate-900 rounded px-2 py-1"
+                className="text-gray-700 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 rounded px-2 py-1"
               >
                 Features
               </a>
               <button
                 onClick={() => navigate("/dashboard")}
-                className="text-slate-400 hover:text-white transition-colors flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-slate-900 rounded px-2 py-1"
+                className="text-gray-700 hover:text-gray-900 transition-colors flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 rounded px-2 py-1"
                 aria-label="Go to dashboard"
               >
-                <LayoutDashboard className="w-4 h-4" aria-hidden="true" /> Go to Dashboard
+                <LayoutDashboard className="w-4 h-4" aria-hidden="true" /> Dashboard
               </button>
               <ThemeToggle />
               <button
                 onClick={handleStart}
-                className="bg-primary-600 hover:bg-primary-700 text-white px-5 py-2 rounded-full font-medium transition-all hover:shadow-lg hover:shadow-primary-500/25 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-slate-900"
+                className="bg-primary-600 hover:bg-primary-700 text-white px-6 py-2.5 rounded-lg font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
                 aria-label="Start validating your idea"
               >
                 Validate Idea
@@ -66,7 +66,7 @@ const Home = () => {
             </div>
 
             <button
-              className="md:hidden text-slate-300 p-2 hover:bg-slate-800 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="md:hidden text-gray-600 p-2 hover:bg-gray-100 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               aria-label={isMenuOpen ? "Close menu" : "Open menu"}
               aria-expanded={isMenuOpen}
@@ -77,10 +77,10 @@ const Home = () => {
 
           {/* Mobile Menu */}
           {isMenuOpen && (
-            <div className="md:hidden py-4 space-y-3 border-t border-slate-800 animate-fade-in">
+            <div className="md:hidden py-4 space-y-3 border-t border-gray-200">
               <a
                 href="#features"
-                className="block text-slate-400 hover:text-white transition-colors px-4 py-2 rounded hover:bg-slate-800"
+                className="block text-gray-700 hover:text-gray-900 transition-colors px-4 py-2 rounded hover:bg-gray-100"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Features
@@ -90,7 +90,7 @@ const Home = () => {
                   setIsMenuOpen(false);
                   navigate("/dashboard");
                 }}
-                className="w-full text-left text-slate-400 hover:text-white transition-colors px-4 py-2 rounded hover:bg-slate-800 flex items-center gap-2"
+                className="w-full text-left text-gray-700 hover:text-gray-900 transition-colors px-4 py-2 rounded hover:bg-gray-100 flex items-center gap-2"
               >
                 <LayoutDashboard className="w-4 h-4" aria-hidden="true" /> Dashboard
               </button>
@@ -102,7 +102,7 @@ const Home = () => {
                   setIsMenuOpen(false);
                   handleStart();
                 }}
-                className="w-full bg-primary-600 hover:bg-primary-700 text-white px-5 py-2 rounded-full font-medium transition-all"
+                className="w-full bg-primary-600 hover:bg-primary-700 text-white px-5 py-2 rounded-lg font-semibold transition-colors"
               >
                 Validate Idea
               </button>
@@ -112,33 +112,29 @@ const Home = () => {
       </nav>
 
       <main>
-        <section className="relative pt-32 pb-20 px-4 overflow-hidden">
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[500px] bg-primary-600/20 blur-[120px] rounded-full pointer-events-none" aria-hidden="true" />
-
+        <section className="relative pt-32 pb-20 px-4 bg-gray-50">
           <div className="relative max-w-4xl mx-auto text-center z-10">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary-500/10 border border-primary-500/20 text-primary-400 text-sm font-medium mb-6" role="status">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary-50 border border-primary-200 text-primary-700 text-sm font-medium mb-6" role="status">
               <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-primary-500"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
               </span>
               AI-Powered Analysis v2.0 Live
             </div>
 
-            <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold tracking-tight mb-6 leading-tight">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight mb-6 leading-tight text-gray-900">
               Validate your startup idea <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-400 to-accent-400">
+              <span className="text-primary-600">
                 before you build.
               </span>
             </h1>
 
-            <p className="text-lg sm:text-xl text-slate-400 mb-10 max-w-2xl mx-auto">
-              Stop guessing. Get instant, data-driven feedback on market size,
-              competitors, and potential risks using advanced AI agents.
+            <p className="text-lg sm:text-xl text-gray-600 mb-10 max-w-2xl mx-auto">
+              Get instant, data-driven feedback on market size,
+              competitors, and potential risks using AI.
             </p>
 
-            <div className="max-w-2xl mx-auto relative group">
-              <div className="absolute -inset-1 bg-gradient-to-r from-primary-500 to-accent-500 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-200" aria-hidden="true"></div>
-              <div className="relative flex flex-col sm:flex-row items-stretch sm:items-center bg-slate-800 rounded-xl p-2 border border-slate-700 shadow-2xl gap-2 sm:gap-0">
+            <div className="max-w-2xl mx-auto">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center bg-white rounded-xl p-2 border border-gray-300 shadow-lg gap-2 sm:gap-0">
                 <label htmlFor="idea-input" className="sr-only">
                   Describe your startup idea
                 </label>
@@ -146,7 +142,7 @@ const Home = () => {
                   id="idea-input"
                   type="text"
                   placeholder="Describe your startup idea (e.g., 'Uber for dog walking')..."
-                  className="flex-1 bg-transparent border-none outline-none text-white px-4 py-3 placeholder-slate-500 focus:ring-2 focus:ring-primary-500 rounded-lg"
+                  className="flex-1 bg-transparent border-none outline-none text-gray-900 px-4 py-3 placeholder-gray-400 focus:ring-2 focus:ring-primary-500 rounded-lg"
                   value={idea}
                   onChange={(e) => setIdea(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleStart()}
@@ -154,7 +150,7 @@ const Home = () => {
                 />
                 <button
                   onClick={handleStart}
-                  className="bg-primary-600 hover:bg-primary-700 text-white px-6 py-3 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-slate-800"
+                  className="bg-primary-600 hover:bg-primary-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
                   aria-label="Start validation"
                 >
                   Validate <ArrowRight className="h-4 w-4" aria-hidden="true" />
@@ -164,40 +160,40 @@ const Home = () => {
           </div>
         </section>
 
-        <section id="features" className="py-20 px-4 bg-slate-900">
+        <section id="features" className="py-20 px-4 bg-white">
           <div className="max-w-7xl mx-auto">
-            <h2 className="text-3xl font-bold text-center mb-12">
+            <h2 className="text-3xl font-bold text-center mb-4 text-gray-900">
               Deep Dive Analysis
             </h2>
+            <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto">
+              Get comprehensive insights to validate your startup idea
+            </p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <article className="bg-slate-800/50 p-8 rounded-3xl border border-slate-700 hover:border-primary-500/50 transition-all duration-200 hover:shadow-xl">
-                <div className="w-12 h-12 bg-primary-500/20 rounded-xl flex items-center justify-center mb-6">
-                  <TrendingUp className="text-primary-400" aria-hidden="true" />
+              <article className="bg-white p-8 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                <div className="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center mb-6">
+                  <TrendingUp className="text-primary-600" aria-hidden="true" />
                 </div>
-                <h3 className="text-xl font-bold mb-3">Market Potential</h3>
-                <p className="text-slate-400">
-                  Real-time TAM, SAM, and SOM calculations based on current web
-                  data.
+                <h3 className="text-xl font-bold mb-3 text-gray-900">Market Potential</h3>
+                <p className="text-gray-600">
+                  Calculate market size and opportunity based on current data.
                 </p>
               </article>
-              <article className="bg-slate-800/50 p-8 rounded-3xl border border-slate-700 hover:border-accent-500/50 transition-all duration-200 hover:shadow-xl">
-                <div className="w-12 h-12 bg-accent-500/20 rounded-xl flex items-center justify-center mb-6">
-                  <Target className="text-accent-400" aria-hidden="true" />
+              <article className="bg-white p-8 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                <div className="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center mb-6">
+                  <Target className="text-primary-600" aria-hidden="true" />
                 </div>
-                <h3 className="text-xl font-bold mb-3">Competitor Intel</h3>
-                <p className="text-slate-400">
-                  Identify who is already solving this problem and uncover their
-                  weaknesses.
+                <h3 className="text-xl font-bold mb-3 text-gray-900">Competitor Analysis</h3>
+                <p className="text-gray-600">
+                  Identify existing solutions and discover market gaps.
                 </p>
               </article>
-              <article className="bg-slate-800/50 p-8 rounded-3xl border border-slate-700 hover:border-rose-500/50 transition-all duration-200 hover:shadow-xl">
-                <div className="w-12 h-12 bg-rose-500/20 rounded-xl flex items-center justify-center mb-6">
-                  <ShieldCheck className="text-rose-400" aria-hidden="true" />
+              <article className="bg-white p-8 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                <div className="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center mb-6">
+                  <ShieldCheck className="text-primary-600" aria-hidden="true" />
                 </div>
-                <h3 className="text-xl font-bold mb-3">Risk Assessment</h3>
-                <p className="text-slate-400">
-                  AI plays "Devil's Advocate" to find critical flaws in your
-                  logic.
+                <h3 className="text-xl font-bold mb-3 text-gray-900">Risk Assessment</h3>
+                <p className="text-gray-600">
+                  Identify potential challenges and risks in your business model.
                 </p>
               </article>
             </div>
@@ -205,9 +201,9 @@ const Home = () => {
         </section>
       </main>
 
-      <footer className="border-t border-slate-800 py-12 text-center bg-slate-950" role="contentinfo">
+      <footer className="border-t border-gray-200 py-12 text-center bg-gray-50" role="contentinfo">
         <div className="max-w-4xl mx-auto px-4">
-          <p className="text-slate-600">
+          <p className="text-gray-500">
             © 2025 Validator.ai. Built by Gauravmishra01.
           </p>
         </div>
