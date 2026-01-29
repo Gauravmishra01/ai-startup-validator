@@ -44,13 +44,13 @@ const Home = () => {
             <div className="hidden md:flex items-center gap-6">
               <a
                 href="#features"
-                className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 rounded px-2 py-1"
+                className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 rounded px-2 py-1"
               >
                 Features
               </a>
               <button
                 onClick={() => navigate("/dashboard")}
-                className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 transition-colors flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 rounded px-2 py-1"
+                className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 transition-colors flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 rounded px-2 py-1"
                 aria-label="Go to dashboard"
               >
                 <LayoutDashboard className="w-4 h-4" aria-hidden="true" /> Dashboard
@@ -58,7 +58,7 @@ const Home = () => {
               <ThemeToggle />
               <button
                 onClick={handleStart}
-                className="bg-primary-600 hover:bg-primary-700 text-white px-6 py-2.5 rounded-lg font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+                className="bg-primary-600 hover:bg-primary-700 text-white px-6 py-2.5 rounded-lg font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
                 aria-label="Start validating your idea"
               >
                 Validate Idea
@@ -142,7 +142,7 @@ const Home = () => {
                   id="idea-input"
                   type="text"
                   placeholder="Describe your startup idea (e.g., 'Uber for dog walking')..."
-                  className="flex-1 bg-transparent border-none outline-none text-gray-900 dark:text-gray-100 px-4 py-3 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-primary-500 rounded-lg"
+                  className="flex-1 bg-transparent border-none outline-none text-gray-900 dark:text-gray-100 px-4 py-3 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-700 rounded-lg"
                   value={idea}
                   onChange={(e) => setIdea(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleStart()}
@@ -150,7 +150,7 @@ const Home = () => {
                 />
                 <button
                   onClick={handleStart}
-                  className="bg-primary-600 hover:bg-primary-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+                  className="bg-primary-600 hover:bg-primary-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-700"
                   aria-label="Start validation"
                 >
                   Validate <ArrowRight className="h-4 w-4" aria-hidden="true" />
