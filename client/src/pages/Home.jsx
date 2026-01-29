@@ -44,13 +44,13 @@ const Home = () => {
             <div className="hidden md:flex items-center gap-6">
               <a
                 href="#features"
-                className="text-gray-600 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 rounded px-2 py-1"
+                className="text-gray-700 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 rounded px-2 py-1"
               >
                 Features
               </a>
               <button
                 onClick={() => navigate("/dashboard")}
-                className="text-gray-600 hover:text-gray-900 transition-colors flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 rounded px-2 py-1"
+                className="text-gray-700 hover:text-gray-900 transition-colors flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 rounded px-2 py-1"
                 aria-label="Go to dashboard"
               >
                 <LayoutDashboard className="w-4 h-4" aria-hidden="true" /> Dashboard
@@ -80,7 +80,7 @@ const Home = () => {
             <div className="md:hidden py-4 space-y-3 border-t border-gray-200">
               <a
                 href="#features"
-                className="block text-gray-600 hover:text-gray-900 transition-colors px-4 py-2 rounded hover:bg-gray-100"
+                className="block text-gray-700 hover:text-gray-900 transition-colors px-4 py-2 rounded hover:bg-gray-100"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Features
@@ -90,7 +90,7 @@ const Home = () => {
                   setIsMenuOpen(false);
                   navigate("/dashboard");
                 }}
-                className="w-full text-left text-gray-600 hover:text-gray-900 transition-colors px-4 py-2 rounded hover:bg-gray-100 flex items-center gap-2"
+                className="w-full text-left text-gray-700 hover:text-gray-900 transition-colors px-4 py-2 rounded hover:bg-gray-100 flex items-center gap-2"
               >
                 <LayoutDashboard className="w-4 h-4" aria-hidden="true" /> Dashboard
               </button>
@@ -116,7 +116,7 @@ const Home = () => {
           <div className="relative max-w-4xl mx-auto text-center z-10">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary-50 border border-primary-200 text-primary-700 text-sm font-medium mb-6" role="status">
               <span className="relative flex h-2 w-2">
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-primary-600"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
               </span>
               AI-Powered Analysis v2.0 Live
             </div>
