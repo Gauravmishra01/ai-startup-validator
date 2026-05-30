@@ -1,4 +1,4 @@
-# 🚀 AI Startup Validator
+`# 🚀 AI Startup Validator
 
 Validate, analyze, and score startup ideas with AI.
 

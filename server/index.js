@@ -7,7 +7,6 @@ const helmet = require("helmet");
 const session = require("express-session");
 const MongoStore = require("connect-mongo");
 const rateLimit = require("express-rate-limit");
-const mongoSanitize = require("express-mongo-sanitize");
 const hpp = require("hpp");
 const bcrypt = require("bcryptjs");
 const Groq = require("groq-sdk");
@@ -16,6 +15,7 @@ const User = require("./models/User");
 
 const app = express();
 const isProduction = process.env.NODE_ENV === "production";
+const mongoUri = process.env.MONGO_URI?.trim();
 const sessionCookieName =
   process.env.SESSION_COOKIE_NAME || "ai_startup_validator_session";
 
@@ -42,6 +42,16 @@ const corsOptions = {
 };
 
 const createCsrfToken = () => crypto.randomBytes(32).toString("hex");
+
+const getGroqClient = () => {
+  const apiKey = process.env.GROQ_API_KEY;
+
+  if (!apiKey) {
+    return null;
+  }
+
+  return new Groq({ apiKey });
+};
 
 const getSessionCookieOptions = () => ({
   httpOnly: true,
@@ -146,6 +156,16 @@ const requireAuth = async (req, res, next) => {
 };
 
 const analyzeStartupIdea = async (title, description) => {
+  const groq = getGroqClient();
+
+  if (!groq) {
+    throw {
+      status: 503,
+      error: "AI analysis is unavailable",
+      details: "Set GROQ_API_KEY in server/.env to enable startup analysis.",
+    };
+  }
+
   if (title.length > 200) {
     throw {
       status: 400,
@@ -236,10 +256,6 @@ const buildIdeaPayload = async (req, res) => {
   return res.status(201).json(result);
 };
 
-const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY,
-});
-
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 10,
@@ -275,10 +291,8 @@ const ideaLimiter = rateLimit({
 
 app.use(helmet());
 app.use(cors(corsOptions));
-app.options("*", cors(corsOptions));
 app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ extended: false }));
-app.use(mongoSanitize());
 app.use(hpp());
 app.set("trust proxy", 1);
 
@@ -288,10 +302,12 @@ app.use(
     secret: process.env.SESSION_SECRET || "dev-session-secret",
     resave: false,
     saveUninitialized: false,
-    store: MongoStore.create({
-      mongoUrl: process.env.MONGO_URI,
-      ttl: 60 * 60 * 24 * 7,
-    }),
+    store: mongoUri
+      ? MongoStore.create({
+          mongoUrl: mongoUri,
+          ttl: 60 * 60 * 24 * 7,
+        })
+      : undefined,
     cookie: getSessionCookieOptions(),
   }),
 );
@@ -554,12 +570,17 @@ app.use((error, req, res, next) => {
 
 const PORT = process.env.PORT || 5000;
 
-mongoose
-  .connect(process.env.MONGO_URI)
-  .then(() => {
-    app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-  })
-  .catch((error) => {
-    console.error("MongoDB connection failed:", error);
-    process.exit(1);
-  });
+if (!mongoUri) {
+  console.warn("MONGO_URI is missing. Starting without a MongoDB connection.");
+  app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+} else {
+  mongoose
+    .connect(mongoUri)
+    .then(() => {
+      app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+    })
+    .catch((error) => {
+      console.error("MongoDB connection failed:", error);
+      process.exit(1);
+    });
+}
