@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Loader2, Sparkles } from "lucide-react";
 import Breadcrumb from "../components/Breadcrumb";
+import { api } from "../api/client";
 
 const CreateIdea = () => {
   const location = useLocation();
@@ -11,7 +12,7 @@ const CreateIdea = () => {
   const [startupName, setStartupName] = useState("");
   const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
-  const [analysis, setAnalysis] = useState(null);
+  const [message, setMessage] = useState(null);
 
   // Prefill description if passed from Home page
   useEffect(() => {
@@ -22,51 +23,23 @@ const CreateIdea = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setMessage(null);
 
     if (!startupName || !description) {
-      alert("Please fill in all fields");
+      setMessage("Please fill in both fields before submitting.");
       return;
     }
 
     setLoading(true);
 
     try {
-      const res = await fetch(
-        "https://ai-startup-validator-pol2.onrender.com/api/validate",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            title: startupName, // ✅ correct variable
-            description: description,
-          }),
-        },
-      );
-
-      // Check response status first
-      if (!res.ok) {
-        // Try to parse error response
-        let errorData;
-        try {
-          errorData = await res.json();
-        } catch {
-          // If JSON parsing fails, use status text
-          throw new Error(`Server error: ${res.statusText || res.status}`);
-        }
-        
-        // Handle error response from server
-        const errorMessage = errorData.error || "Server error occurred";
-        const errorDetails = errorData.details || "";
-        throw new Error(`${errorMessage}${errorDetails ? ": " + errorDetails : ""}`);
-      }
-
-      // Now safely parse successful response
-      const data = await res.json();
+      const { data } = await api.post("/api/validate", {
+        title: startupName,
+        description,
+      });
       console.log("AI Data:", data);
 
-      setAnalysis(data);
+      setMessage("Idea analyzed successfully.");
 
       // Optional: navigate to result page if ID exists
       if (data?._id) {
@@ -74,18 +47,30 @@ const CreateIdea = () => {
       }
     } catch (error) {
       console.error("Error:", error);
-      
+
       // Provide more specific error messages
       let errorMsg;
-      
-      if (error.message.includes("Failed to fetch") || error.message.includes("NetworkError")) {
-        errorMsg = "Unable to connect to the server. Please check your internet connection or try again later.";
+
+      if (error?.response?.status === 401) {
+        navigate("/login", { replace: true });
+        return;
+      }
+
+      if (
+        error.message.includes("Failed to fetch") ||
+        error.message.includes("NetworkError")
+      ) {
+        errorMsg =
+          "Unable to connect to the server. Please check your internet connection or try again later.";
+      } else if (error?.response?.data?.details) {
+        errorMsg = `${error.response.data.error || "Request failed"}: ${error.response.data.details}`;
       } else {
         // Use the backend error message directly if it's already descriptive
-        errorMsg = error.message || "An unexpected error occurred. Please try again.";
+        errorMsg =
+          error.message || "An unexpected error occurred. Please try again.";
       }
-      
-      alert(errorMsg);
+
+      setMessage(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -93,13 +78,16 @@ const CreateIdea = () => {
 
   return (
     <div className="animate-fade-in">
-      <Breadcrumb items={[{ label: 'Create New Idea' }]} />
-      
+      <Breadcrumb items={[{ label: "Create New Idea" }]} />
+
       <div className="max-w-3xl mx-auto">
         <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 transition-colors">
           <div className="flex items-center gap-3 mb-6">
             <div className="p-3 bg-primary-100 dark:bg-primary-900/30 rounded-xl">
-              <Sparkles className="w-6 h-6 text-primary-600 dark:text-primary-400" aria-hidden="true" />
+              <Sparkles
+                className="w-6 h-6 text-primary-600 dark:text-primary-400"
+                aria-hidden="true"
+              />
             </div>
             <div>
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -112,9 +100,15 @@ const CreateIdea = () => {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
+            {message ? (
+              <div className="rounded-xl border border-primary-200 bg-primary-50 px-4 py-3 text-sm text-primary-800 dark:border-primary-900/50 dark:bg-primary-950/30 dark:text-primary-200">
+                {message}
+              </div>
+            ) : null}
+
             {/* Startup Name */}
             <div>
-              <label 
+              <label
                 htmlFor="startup-name"
                 className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
               >
@@ -138,7 +132,7 @@ const CreateIdea = () => {
 
             {/* Description */}
             <div>
-              <label 
+              <label
                 htmlFor="description"
                 className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
               >
@@ -172,7 +166,10 @@ const CreateIdea = () => {
             >
               {loading ? (
                 <>
-                  <Loader2 className="w-5 h-5 animate-spin" aria-hidden="true" />
+                  <Loader2
+                    className="w-5 h-5 animate-spin"
+                    aria-hidden="true"
+                  />
                   Analyzing with AI...
                 </>
               ) : (

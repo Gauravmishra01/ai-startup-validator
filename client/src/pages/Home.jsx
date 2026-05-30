@@ -12,29 +12,52 @@ import {
   LayoutDashboard,
 } from "lucide-react";
 import ThemeToggle from "../components/ThemeToggle";
+import { useAuth } from "../contexts/AuthContext";
 
 const Home = () => {
   const [idea, setIdea] = useState("");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   // UPDATED FUNCTION: Passes the idea text to the next page
   const handleStart = () => {
-    navigate("/create", { state: { initialIdea: idea } });
+    if (user) {
+      navigate("/create", { state: { initialIdea: idea } });
+      return;
+    }
+
+    navigate("/signup", {
+      state: {
+        redirectTo: "/create",
+        initialIdea: idea,
+      },
+    });
+  };
+
+  const handleDashboard = () => {
+    navigate(user ? "/dashboard" : "/login");
   };
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 font-sans transition-colors duration-200">
-      <nav className="fixed w-full z-50 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm transition-colors duration-200" role="navigation" aria-label="Main navigation">
+      <nav
+        className="fixed w-full z-50 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm transition-colors duration-200"
+        role="navigation"
+        aria-label="Main navigation"
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <button
               className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
-              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+              onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
               aria-label="Scroll to top"
             >
               <div className="">
-                <Sparkles className="h-6 w-6 text-primary-600" aria-hidden="true" />
+                <Sparkles
+                  className="h-6 w-6 text-primary-600"
+                  aria-hidden="true"
+                />
               </div>
               <span className="text-xl font-bold text-primary-600">
                 🚀 Validator AI
@@ -49,13 +72,22 @@ const Home = () => {
                 Features
               </a>
               <button
-                onClick={() => navigate("/dashboard")}
+                onClick={handleDashboard}
                 className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 transition-colors flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 rounded px-2 py-1"
                 aria-label="Go to dashboard"
               >
-                <LayoutDashboard className="w-4 h-4" aria-hidden="true" /> Dashboard
+                <LayoutDashboard className="w-4 h-4" aria-hidden="true" />{" "}
+                Dashboard
               </button>
               <ThemeToggle />
+              {!user ? (
+                <button
+                  onClick={() => navigate("/login")}
+                  className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 transition-colors rounded px-2 py-1"
+                >
+                  Sign in
+                </button>
+              ) : null}
               <button
                 onClick={handleStart}
                 className="bg-primary-600 hover:bg-primary-700 text-white px-6 py-2.5 rounded-lg font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
@@ -71,7 +103,11 @@ const Home = () => {
               aria-label={isMenuOpen ? "Close menu" : "Open menu"}
               aria-expanded={isMenuOpen}
             >
-              {isMenuOpen ? <X aria-hidden="true" /> : <Menu aria-hidden="true" />}
+              {isMenuOpen ? (
+                <X aria-hidden="true" />
+              ) : (
+                <Menu aria-hidden="true" />
+              )}
             </button>
           </div>
 
@@ -88,15 +124,27 @@ const Home = () => {
               <button
                 onClick={() => {
                   setIsMenuOpen(false);
-                  navigate("/dashboard");
+                  handleDashboard();
                 }}
                 className="w-full text-left text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 transition-colors px-4 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
               >
-                <LayoutDashboard className="w-4 h-4" aria-hidden="true" /> Dashboard
+                <LayoutDashboard className="w-4 h-4" aria-hidden="true" />{" "}
+                Dashboard
               </button>
               <div className="px-4">
                 <ThemeToggle />
               </div>
+              {!user ? (
+                <button
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    navigate("/login");
+                  }}
+                  className="w-full text-left text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 transition-colors px-4 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+                >
+                  Sign in
+                </button>
+              ) : null}
               <button
                 onClick={() => {
                   setIsMenuOpen(false);
@@ -114,7 +162,10 @@ const Home = () => {
       <main>
         <section className="relative pt-32 pb-20 px-4 bg-gray-50 dark:bg-gray-800 transition-colors duration-200">
           <div className="relative max-w-4xl mx-auto text-center z-10">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-700 text-primary-700 dark:text-primary-300 text-sm font-medium mb-6" role="status">
+            <div
+              className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-700 text-primary-700 dark:text-primary-300 text-sm font-medium mb-6"
+              role="status"
+            >
               <span className="relative flex h-2 w-2">
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
               </span>
@@ -129,8 +180,8 @@ const Home = () => {
             </h1>
 
             <p className="text-lg sm:text-xl text-gray-600 dark:text-gray-400 mb-10 max-w-2xl mx-auto">
-              Get instant, data-driven feedback on market size,
-              competitors, and potential risks using AI.
+              Get instant, data-driven feedback on market size, competitors, and
+              potential risks using AI.
             </p>
 
             <div className="max-w-2xl mx-auto">
@@ -160,7 +211,10 @@ const Home = () => {
           </div>
         </section>
 
-        <section id="features" className="py-20 px-4 bg-white dark:bg-gray-900 transition-colors duration-200">
+        <section
+          id="features"
+          className="py-20 px-4 bg-white dark:bg-gray-900 transition-colors duration-200"
+        >
           <div className="max-w-7xl mx-auto">
             <h2 className="text-3xl font-bold text-center mb-4 text-gray-900 dark:text-gray-100">
               Deep Dive Analysis
@@ -171,29 +225,45 @@ const Home = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <article className="bg-white dark:bg-gray-800 p-8 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow">
                 <div className="w-12 h-12 bg-primary-100 dark:bg-primary-900/30 rounded-lg flex items-center justify-center mb-6">
-                  <TrendingUp className="text-primary-600 dark:text-primary-400" aria-hidden="true" />
+                  <TrendingUp
+                    className="text-primary-600 dark:text-primary-400"
+                    aria-hidden="true"
+                  />
                 </div>
-                <h3 className="text-xl font-bold mb-3 text-gray-900 dark:text-gray-100">Market Potential</h3>
+                <h3 className="text-xl font-bold mb-3 text-gray-900 dark:text-gray-100">
+                  Market Potential
+                </h3>
                 <p className="text-gray-600 dark:text-gray-400">
                   Calculate market size and opportunity based on current data.
                 </p>
               </article>
               <article className="bg-white dark:bg-gray-800 p-8 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow">
                 <div className="w-12 h-12 bg-primary-100 dark:bg-primary-900/30 rounded-lg flex items-center justify-center mb-6">
-                  <Target className="text-primary-600 dark:text-primary-400" aria-hidden="true" />
+                  <Target
+                    className="text-primary-600 dark:text-primary-400"
+                    aria-hidden="true"
+                  />
                 </div>
-                <h3 className="text-xl font-bold mb-3 text-gray-900 dark:text-gray-100">Competitor Analysis</h3>
+                <h3 className="text-xl font-bold mb-3 text-gray-900 dark:text-gray-100">
+                  Competitor Analysis
+                </h3>
                 <p className="text-gray-600 dark:text-gray-400">
                   Identify existing solutions and discover market gaps.
                 </p>
               </article>
               <article className="bg-white dark:bg-gray-800 p-8 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow">
                 <div className="w-12 h-12 bg-primary-100 dark:bg-primary-900/30 rounded-lg flex items-center justify-center mb-6">
-                  <ShieldCheck className="text-primary-600 dark:text-primary-400" aria-hidden="true" />
+                  <ShieldCheck
+                    className="text-primary-600 dark:text-primary-400"
+                    aria-hidden="true"
+                  />
                 </div>
-                <h3 className="text-xl font-bold mb-3 text-gray-900 dark:text-gray-100">Risk Assessment</h3>
+                <h3 className="text-xl font-bold mb-3 text-gray-900 dark:text-gray-100">
+                  Risk Assessment
+                </h3>
                 <p className="text-gray-600 dark:text-gray-400">
-                  Identify potential challenges and risks in your business model.
+                  Identify potential challenges and risks in your business
+                  model.
                 </p>
               </article>
             </div>
@@ -201,7 +271,10 @@ const Home = () => {
         </section>
       </main>
 
-      <footer className="border-t border-gray-200 dark:border-gray-700 py-12 text-center bg-gray-50 dark:bg-gray-800 transition-colors duration-200" role="contentinfo">
+      <footer
+        className="border-t border-gray-200 dark:border-gray-700 py-12 text-center bg-gray-50 dark:bg-gray-800 transition-colors duration-200"
+        role="contentinfo"
+      >
         <div className="max-w-4xl mx-auto px-4">
           <p className="text-gray-500 dark:text-gray-400">
             © 2025 Validator.ai. Built by Gauravmishra01.

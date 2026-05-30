@@ -1,48 +1,156 @@
 require("dotenv").config();
+const crypto = require("crypto");
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
+const helmet = require("helmet");
+const session = require("express-session");
+const MongoStore = require("connect-mongo");
+const rateLimit = require("express-rate-limit");
+const mongoSanitize = require("express-mongo-sanitize");
+const hpp = require("hpp");
+const bcrypt = require("bcryptjs");
 const Groq = require("groq-sdk");
 const Idea = require("./models/Idea");
+const User = require("./models/User");
 
 const app = express();
-app.use(express.json());
+const isProduction = process.env.NODE_ENV === "production";
+const sessionCookieName =
+  process.env.SESSION_COOKIE_NAME || "ai_startup_validator_session";
 
-// Configure CORS to allow requests from Vercel frontend
+const corsOrigins = [
+  process.env.CLIENT_ORIGIN,
+  ...(process.env.CLIENT_ORIGINS ? process.env.CLIENT_ORIGINS.split(",") : []),
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+  "https://ai-startup-validator-five.vercel.app",
+]
+  .filter(Boolean)
+  .map((origin) => origin.trim());
+
 const corsOptions = {
-  origin: [
-    "https://ai-startup-validator-five.vercel.app",
-    "http://localhost:5173", // for local development
-  ],
+  origin(origin, callback) {
+    if (!origin || corsOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    return callback(new Error("Not allowed by CORS"));
+  },
+  credentials: true,
   optionsSuccessStatus: 200,
 };
-app.use(cors(corsOptions));
 
-app.get("/", (req, res) => {
-  res.send("🚀 AI Startup Validator Backend is Running!");
+const createCsrfToken = () => crypto.randomBytes(32).toString("hex");
+
+const getSessionCookieOptions = () => ({
+  httpOnly: true,
+  sameSite: "lax",
+  secure: isProduction,
+  maxAge: 1000 * 60 * 60 * 24 * 7,
 });
 
-// Configure Groq
-const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY,
+const ensureCsrfToken = (req) => {
+  if (!req.session.csrfToken) {
+    req.session.csrfToken = createCsrfToken();
+  }
+
+  return req.session.csrfToken;
+};
+
+const getRequestCsrfToken = (req) =>
+  req.get("x-csrf-token") || req.body?._csrf || req.query?._csrf || "";
+
+const sanitizeText = (value) =>
+  String(value ?? "")
+    .replace(/<[^>]*>/g, "")
+    .replace(/["'`]/g, "")
+    .trim();
+
+const normalizeEmail = (value) => sanitizeText(value).toLowerCase();
+
+const validatePasswordStrength = (password) => {
+  const checks = [
+    password.length >= 8,
+    /[a-z]/.test(password),
+    /[A-Z]/.test(password),
+    /\d/.test(password),
+    /[^A-Za-z0-9]/.test(password),
+  ];
+
+  if (!checks.every(Boolean)) {
+    return "Password must be at least 8 characters and include upper case, lower case, number, and symbol.";
+  }
+
+  return null;
+};
+
+const serializeUser = (user) => ({
+  id: user._id,
+  fullName: user.fullName,
+  email: user.email,
+  role: user.role,
+  createdAt: user.createdAt,
 });
 
-// Connect to MongoDB
-mongoose
-  .connect(process.env.MONGO_URI)
-  .then(() => console.log("MongoDB Connected"))
-  .catch((err) => console.error(err));
+const createSessionForUser = (req, user) =>
+  new Promise((resolve, reject) => {
+    req.session.regenerate((error) => {
+      if (error) {
+        return reject(error);
+      }
 
-// --- ROUTES ---
+      req.session.userId = user._id.toString();
+      req.session.csrfToken = createCsrfToken();
 
-// Shared function to validate and analyze startup ideas
-async function analyzeStartupIdea(title, description) {
-  // Validate input lengths
+      req.session.save((saveError) => {
+        if (saveError) {
+          return reject(saveError);
+        }
+
+        return resolve({
+          user: serializeUser(user),
+          csrfToken: req.session.csrfToken,
+        });
+      });
+    });
+  });
+
+const getAuthenticatedUser = async (req) => {
+  if (!req.session.userId) {
+    return null;
+  }
+
+  return User.findById(req.session.userId).select(
+    "fullName email role createdAt",
+  );
+};
+
+const requireAuth = async (req, res, next) => {
+  try {
+    const user = await getAuthenticatedUser(req);
+
+    if (!user) {
+      req.session.destroy(() => {});
+      return res.status(401).json({
+        error: "Authentication required",
+        details: "Please sign in to continue.",
+      });
+    }
+
+    req.authUser = user;
+    return next();
+  } catch (error) {
+    return next(error);
+  }
+};
+
+const analyzeStartupIdea = async (title, description) => {
   if (title.length > 200) {
     throw {
       status: 400,
       error: "Startup name/title is too long",
-      details: "Please limit the title to 200 characters or less"
+      details: "Please limit the title to 200 characters or less",
     };
   }
 
@@ -50,20 +158,12 @@ async function analyzeStartupIdea(title, description) {
     throw {
       status: 400,
       error: "Description is too long",
-      details: "Please limit the description to 2000 characters or less"
+      details: "Please limit the description to 2000 characters or less",
     };
   }
 
-  // Sanitize input for AI prompt only (not for storage)
-  const sanitize = (str) => {
-    return str
-      .replace(/[<>]/g, '') // Remove angle brackets
-      .replace(/["'`]/g, '') // Remove quotes that could break the prompt
-      .substring(0, 2000); // Additional safety limit
-  };
-
-  const sanitizedTitle = sanitize(title);
-  const sanitizedDescription = sanitize(description);
+  const sanitizedTitle = sanitizeText(title).substring(0, 200);
+  const sanitizedDescription = sanitizeText(description).substring(0, 2000);
 
   const prompt = `
     You are an expert startup consultant. Analyze the startup idea below and return a structured JSON object.
@@ -83,135 +183,383 @@ async function analyzeStartupIdea(title, description) {
     RETURN ONLY RAW JSON. NO MARKDOWN.
   `;
 
-  // --- CALL GROQ API ---
   const completion = await groq.chat.completions.create({
-    model: "openai/gpt-oss-120b", // ✅ Stable Groq model
+    model: "openai/gpt-oss-120b",
     messages: [{ role: "user", content: prompt }],
     temperature: 0.3,
   });
 
   const aiText = completion.choices[0].message.content.trim();
 
-  let analysisData;
   try {
     const clean = aiText
       .replace(/```json/g, "")
       .replace(/```/g, "")
       .trim();
-    analysisData = JSON.parse(clean);
-  } catch (err) {
+    return JSON.parse(clean);
+  } catch (error) {
     console.error("JSON Parse Error:\n", aiText);
     throw {
       status: 500,
       error: "Failed to parse AI response",
-      details: "The AI returned an invalid format. Please try again."
+      details: "The AI returned an invalid format. Please try again.",
     };
   }
+};
 
-  // Save to DB with original (unsanitized) content
-  const newIdea = new Idea({
+const createIdea = async (userId, title, description) => {
+  const analysisData = await analyzeStartupIdea(title, description);
+
+  return Idea.create({
+    user: userId,
     title,
     description,
     analysis: analysisData,
   });
+};
 
-  await newIdea.save();
-  return newIdea;
-}
-
-// API validation endpoint (used by frontend)
-app.post("/api/validate", async (req, res) => {
-  const { title, description, startupName } = req.body;
-
-  // Accept both 'title' and 'startupName' for backwards compatibility
-  const ideaTitle = title || startupName;
-
-  if (!ideaTitle || !description) {
-    return res.status(400).json({ 
-      error: "Both startup name/title and description are required",
-      missingFields: {
-        title: !ideaTitle,
-        description: !description
-      }
-    });
-  }
-
-  try {
-    const result = await analyzeStartupIdea(ideaTitle, description);
-    res.status(201).json(result);
-  } catch (err) {
-    console.error("Validation Error:", err);
-    // Handle custom errors from analyzeStartupIdea
-    if (err.status) {
-      res.status(err.status).json({ error: err.error, details: err.details });
-    } else {
-      // Log full error for debugging, but send sanitized error to client
-      res.status(500).json({ 
-        error: "AI Analysis Failed",
-        details: "Unable to analyze the startup idea. Please try again later."
-      });
-    }
-  }
-});
-
-// 1. GET /ideas - List all ideas
-app.get("/ideas", async (req, res) => {
-  try {
-    const ideas = await Idea.find().sort({ createdAt: -1 });
-    res.json(ideas);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// 2. GET /ideas/:id - Get single idea details
-app.get("/ideas/:id", async (req, res) => {
-  try {
-    const idea = await Idea.findById(req.params.id);
-    if (!idea) return res.status(404).json({ error: "Idea not found" });
-    res.json(idea);
-  } catch (err) {
-    res.status(500).json({ error: "Idea not found" });
-  }
-});
-
-// 3. POST /ideas - Analyze using Groq + Save
-app.post("/ideas", async (req, res) => {
-  const { title, description } = req.body;
+const buildIdeaPayload = async (req, res) => {
+  const title = sanitizeText(req.body.title || req.body.startupName);
+  const description = sanitizeText(req.body.description);
 
   if (!title || !description) {
-    return res.status(400).json({ 
-      error: "Title and description are required",
-      details: "Please provide both fields"
+    return res.status(400).json({
+      error: "Both startup name/title and description are required",
+      missingFields: {
+        title: !title,
+        description: !description,
+      },
+    });
+  }
+
+  const result = await createIdea(req.authUser._id, title, description);
+  return res.status(201).json(result);
+};
+
+const groq = new Groq({
+  apiKey: process.env.GROQ_API_KEY,
+});
+
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    error: "Too many login attempts",
+    details: "Please wait a few minutes and try again.",
+  },
+});
+
+const signupLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    error: "Too many signup attempts",
+    details: "Please wait an hour and try again.",
+  },
+});
+
+const ideaLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    error: "Too many idea requests",
+    details: "Please slow down and try again shortly.",
+  },
+});
+
+app.use(helmet());
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
+app.use(express.json({ limit: "1mb" }));
+app.use(express.urlencoded({ extended: false }));
+app.use(mongoSanitize());
+app.use(hpp());
+app.set("trust proxy", 1);
+
+app.use(
+  session({
+    name: sessionCookieName,
+    secret: process.env.SESSION_SECRET || "dev-session-secret",
+    resave: false,
+    saveUninitialized: false,
+    store: MongoStore.create({
+      mongoUrl: process.env.MONGO_URI,
+      ttl: 60 * 60 * 24 * 7,
+    }),
+    cookie: getSessionCookieOptions(),
+  }),
+);
+
+app.use((req, res, next) => {
+  ensureCsrfToken(req);
+  return next();
+});
+
+app.use((req, res, next) => {
+  if (
+    req.method === "GET" ||
+    req.method === "HEAD" ||
+    req.method === "OPTIONS"
+  ) {
+    return next();
+  }
+
+  const requestToken = getRequestCsrfToken(req);
+  if (!requestToken || requestToken !== req.session.csrfToken) {
+    return res.status(403).json({
+      error: "Invalid CSRF token",
+      details: "Please refresh the page and try again.",
+    });
+  }
+
+  return next();
+});
+
+app.get("/", (req, res) => {
+  res.send("🚀 AI Startup Validator Backend is Running!");
+});
+
+app.get("/api/auth/csrf", (req, res) => {
+  return res.json({ csrfToken: ensureCsrfToken(req) });
+});
+
+app.get("/api/auth/me", async (req, res) => {
+  const user = await getAuthenticatedUser(req);
+
+  if (!user) {
+    return res.status(401).json({
+      error: "Not authenticated",
+      details: "Please sign in to continue.",
+    });
+  }
+
+  return res.json({ user: serializeUser(user) });
+});
+
+app.post("/api/auth/signup", signupLimiter, async (req, res) => {
+  const fullName = sanitizeText(req.body.fullName);
+  const email = normalizeEmail(req.body.email);
+  const password = String(req.body.password || "");
+  const confirmPassword = String(req.body.confirmPassword || "");
+
+  if (!fullName || !email || !password || !confirmPassword) {
+    return res.status(400).json({
+      error: "Missing required fields",
+      details: "Full name, email, password, and confirm password are required.",
+    });
+  }
+
+  if (password !== confirmPassword) {
+    return res.status(400).json({
+      error: "Passwords do not match",
+      details: "Please make sure both password fields match.",
+    });
+  }
+
+  const passwordError = validatePasswordStrength(password);
+  if (passwordError) {
+    return res.status(400).json({
+      error: "Weak password",
+      details: passwordError,
+    });
+  }
+
+  const existingUser = await User.findOne({ email });
+  if (existingUser) {
+    return res.status(409).json({
+      error: "Email already registered",
+      details: "Please log in with that email address or use a different one.",
+    });
+  }
+
+  const hashedPassword = await bcrypt.hash(password, 12);
+  const user = await User.create({
+    fullName,
+    email,
+    password: hashedPassword,
+  });
+
+  try {
+    const payload = await createSessionForUser(req, user);
+    return res.status(201).json(payload);
+  } catch (error) {
+    console.error("Signup session error:", error);
+    return res.status(500).json({
+      error: "Unable to create session",
+      details:
+        "Your account was created, but the session could not be established.",
+    });
+  }
+});
+
+app.post("/api/auth/login", loginLimiter, async (req, res) => {
+  const email = normalizeEmail(req.body.email);
+  const password = String(req.body.password || "");
+
+  if (!email || !password) {
+    return res.status(400).json({
+      error: "Missing credentials",
+      details: "Email and password are required.",
+    });
+  }
+
+  const user = await User.findOne({ email }).select(
+    "+password fullName email role createdAt",
+  );
+
+  if (!user) {
+    return res.status(401).json({
+      error: "Invalid credentials",
+      details: "The email or password is incorrect.",
+    });
+  }
+
+  const passwordMatches = await bcrypt.compare(password, user.password);
+  if (!passwordMatches) {
+    return res.status(401).json({
+      error: "Invalid credentials",
+      details: "The email or password is incorrect.",
     });
   }
 
   try {
-    const result = await analyzeStartupIdea(title, description);
-    res.status(201).json(result);
-  } catch (err) {
-    console.error("Ideas Error:", err);
-    // Handle custom errors from analyzeStartupIdea
-    if (err.status) {
-      res.status(err.status).json({ error: err.error, details: err.details });
-    } else {
-      res.status(500).json({ 
-        error: "AI Analysis Failed",
-        details: "Unable to analyze the startup idea. Please try again later."
-      });
-    }
+    const payload = await createSessionForUser(req, user);
+    return res.json(payload);
+  } catch (error) {
+    console.error("Login session error:", error);
+    return res.status(500).json({
+      error: "Unable to create session",
+      details: "Please try signing in again.",
+    });
   }
 });
 
-// 4. DELETE /ideas/:id
-app.delete("/ideas/:id", async (req, res) => {
+app.post("/api/auth/logout", requireAuth, async (req, res) => {
+  return req.session.destroy((error) => {
+    if (error) {
+      return res.status(500).json({
+        error: "Logout failed",
+        details: "Please try again.",
+      });
+    }
+
+    res.clearCookie(sessionCookieName, getSessionCookieOptions());
+    return res.json({ message: "Logged out successfully" });
+  });
+});
+
+app.post("/api/validate", requireAuth, ideaLimiter, async (req, res) => {
   try {
-    await Idea.findByIdAndDelete(req.params.id);
-    res.json({ message: "Deleted" });
-  } catch (err) {
-    res.status(500).json({ error: "Delete failed" });
+    return await buildIdeaPayload(req, res);
+  } catch (error) {
+    console.error("Validation Error:", error);
+
+    if (error.status) {
+      return res
+        .status(error.status)
+        .json({ error: error.error, details: error.details });
+    }
+
+    return res.status(500).json({
+      error: "AI Analysis Failed",
+      details: "Unable to analyze the startup idea. Please try again later.",
+    });
   }
+});
+
+app.get("/ideas", requireAuth, async (req, res) => {
+  try {
+    const ideas = await Idea.find({ user: req.authUser._id }).sort({
+      createdAt: -1,
+    });
+    return res.json(ideas);
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+app.get("/ideas/:id", requireAuth, async (req, res) => {
+  try {
+    const idea = await Idea.findOne({
+      _id: req.params.id,
+      user: req.authUser._id,
+    });
+
+    if (!idea) {
+      return res.status(404).json({ error: "Idea not found" });
+    }
+
+    return res.json(idea);
+  } catch (error) {
+    return res.status(404).json({ error: "Idea not found" });
+  }
+});
+
+app.post("/ideas", requireAuth, ideaLimiter, async (req, res) => {
+  try {
+    return await buildIdeaPayload(req, res);
+  } catch (error) {
+    console.error("Ideas Error:", error);
+
+    if (error.status) {
+      return res
+        .status(error.status)
+        .json({ error: error.error, details: error.details });
+    }
+
+    return res.status(500).json({
+      error: "AI Analysis Failed",
+      details: "Unable to analyze the startup idea. Please try again later.",
+    });
+  }
+});
+
+app.delete("/ideas/:id", requireAuth, async (req, res) => {
+  try {
+    const deletedIdea = await Idea.findOneAndDelete({
+      _id: req.params.id,
+      user: req.authUser._id,
+    });
+
+    if (!deletedIdea) {
+      return res.status(404).json({ error: "Idea not found" });
+    }
+
+    return res.json({ message: "Deleted" });
+  } catch (error) {
+    return res.status(500).json({ error: "Delete failed" });
+  }
+});
+
+app.use((error, req, res, next) => {
+  if (error.message === "Not allowed by CORS") {
+    return res.status(403).json({
+      error: "CORS blocked",
+      details: "This origin is not allowed to access the API.",
+    });
+  }
+
+  console.error(error);
+  return res.status(500).json({
+    error: "Server error",
+    details: "An unexpected error occurred.",
+  });
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+mongoose
+  .connect(process.env.MONGO_URI)
+  .then(() => {
+    app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+  })
+  .catch((error) => {
+    console.error("MongoDB connection failed:", error);
+    process.exit(1);
+  });

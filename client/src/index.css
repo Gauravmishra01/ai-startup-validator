@@ -1,3 +1,56 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@600;700;800&display=swap");
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: light;
+    --surface: 248 250 252;
+    --surface-2: 255 255 255;
+    --text: 15 23 42;
+  }
+
+  .dark {
+    color-scheme: dark;
+    --surface: 2 6 23;
+    --surface-2: 15 23 42;
+    --text: 226 232 240;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    min-height: 100vh;
+    background-color: rgb(var(--surface));
+    color: rgb(var(--text));
+    font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: "Poppins", "Inter", ui-sans-serif, system-ui, sans-serif;
+  }
+
+  ::selection {
+    background: rgba(79, 70, 229, 0.2);
+  }
+}
+
+@layer utilities {
+  .glass-panel {
+    background: rgba(255, 255, 255, 0.72);
+    backdrop-filter: blur(18px);
+  }
+
+  .dark .glass-panel {
+    background: rgba(15, 23, 42, 0.72);
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "name": "@jas-/asn.1",
+  "version": "5.4.2",
+  "description": "ASN.1 encoder and decoder",
+  "main": "lib/asn1.js",
+  "scripts": {
+    "lint-2560": "eslint --fix rfc/2560/*.js rfc/2560/test/*.js",
+    "lint-5280": "eslint --fix rfc/5280/*.js rfc/5280/test/*.js",
+    "lint": "eslint --fix lib/*.js lib/**/*.js lib/**/**/*.js && npm run lint-2560 && npm run lint-5280",
+    "test": "mocha --reporter spec test/*-test.js && cd rfc/2560 && npm i && npm test && cd ../../rfc/5280 && npm i && npm test && cd ../../ && npm run lint"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:jas/asn.1"
+  },
+  "keywords": [
+    "asn.1",
+    "der"
+  ],
+  "authors": [
+    "Fedor Indutny",
+    "Jason Gerfen"
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/jas-/asn.1/issues"
+  },
+  "homepage": "https://github.com/jas-/asn.1",
+  "dependencies": {
+    "bn.js": ">=5",
+    "inherits": ">=2",
+    "minimalistic-assert": ">=1",
+    "safer-buffer": ">=2"
+  }
+}
