@@ -1,11 +1,11 @@
 require("dotenv").config();
 const crypto = require("crypto");
+const dns = require("dns");
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const helmet = require("helmet");
 const session = require("express-session");
-const MongoStore = require("connect-mongo");
 const rateLimit = require("express-rate-limit");
 const hpp = require("hpp");
 const bcrypt = require("bcryptjs");
@@ -16,6 +16,11 @@ const User = require("./models/User");
 const app = express();
 const isProduction = process.env.NODE_ENV === "production";
 const mongoUri = process.env.MONGO_URI?.trim();
+const mongoDnsServers = (process.env.MONGO_DNS_SERVERS || "8.8.8.8,1.1.1.1")
+  .split(",")
+  .map((item) => item.trim())
+  .filter(Boolean);
+let dbConnected = false;
 const sessionCookieName =
   process.env.SESSION_COOKIE_NAME || "ai_startup_validator_session";
 
@@ -302,12 +307,6 @@ app.use(
     secret: process.env.SESSION_SECRET || "dev-session-secret",
     resave: false,
     saveUninitialized: false,
-    store: mongoUri
-      ? MongoStore.create({
-          mongoUrl: mongoUri,
-          ttl: 60 * 60 * 24 * 7,
-        })
-      : undefined,
     cookie: getSessionCookieOptions(),
   }),
 );
@@ -315,6 +314,20 @@ app.use(
 app.use((req, res, next) => {
   ensureCsrfToken(req);
   return next();
+});
+
+app.use((req, res, next) => {
+  const dbBypassPaths = ["/", "/api/auth/csrf"];
+
+  if (dbConnected || dbBypassPaths.includes(req.path)) {
+    return next();
+  }
+
+  return res.status(503).json({
+    error: "Database unavailable",
+    details:
+      "MongoDB is not connected. Check server/.env, MongoDB Atlas network access, and the MONGO_URI value.",
+  });
 });
 
 app.use((req, res, next) => {
@@ -570,6 +583,13 @@ app.use((error, req, res, next) => {
 
 const PORT = process.env.PORT || 5000;
 
+if (mongoUri?.startsWith("mongodb+srv://") && mongoDnsServers.length > 0) {
+  dns.setServers(mongoDnsServers);
+  console.log(
+    `Using DNS servers for MongoDB SRV: ${mongoDnsServers.join(", ")}`,
+  );
+}
+
 if (!mongoUri) {
   console.warn("MONGO_URI is missing. Starting without a MongoDB connection.");
   app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
@@ -577,10 +597,14 @@ if (!mongoUri) {
   mongoose
     .connect(mongoUri)
     .then(() => {
+      dbConnected = true;
       app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
     })
     .catch((error) => {
-      console.error("MongoDB connection failed:", error);
-      process.exit(1);
+      console.warn("MongoDB connection unavailable:", error?.message || error);
+      console.warn(
+        "Starting in degraded mode without MongoDB. Auth and idea routes will return 503 until the connection is fixed.",
+      );
+      app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
     });
 }
