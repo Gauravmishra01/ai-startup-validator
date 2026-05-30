@@ -36,8 +36,28 @@ const corsOrigins = [
 
 const corsOptions = {
   origin(origin, callback) {
-    if (!origin || corsOrigins.includes(origin)) {
-      return callback(null, true);
+    // Allow requests with no origin (server-to-server / same-origin tools)
+    if (!origin) return callback(null, true);
+
+    // Allow explicit whitelist
+    if (corsOrigins.includes(origin)) return callback(null, true);
+
+    // Allow common deployment hosts (Vercel previews/custom domains and Render)
+    // This keeps CORS flexible for typical deployments while still rejecting unknown origins.
+    try {
+      const url = new URL(origin);
+      const hostname = url.hostname;
+
+      if (
+        hostname.endsWith(".vercel.app") ||
+        hostname.endsWith(".onrender.com") ||
+        hostname.endsWith(".netlify.app") ||
+        hostname.endsWith(".githubpreview.dev")
+      ) {
+        return callback(null, true);
+      }
+    } catch (e) {
+      // fall through to reject
     }
 
     return callback(new Error("Not allowed by CORS"));
@@ -60,7 +80,10 @@ const getGroqClient = () => {
 
 const getSessionCookieOptions = () => ({
   httpOnly: true,
-  sameSite: "lax",
+  // In production the frontend and backend live on different top-level domains (Vercel + Render).
+  // To allow the browser to accept session cookies set by the API during cross-site POSTs,
+  // we must set `SameSite=None` and `secure: true` (HTTPS required).
+  sameSite: isProduction ? "none" : "lax",
   secure: isProduction,
   maxAge: 1000 * 60 * 60 * 24 * 7,
 });
