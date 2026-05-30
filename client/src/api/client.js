@@ -1,6 +1,20 @@
 import axios from "axios";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+let API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
+// Normalize common malformed values (e.g. ":5000" or "localhost:5000")
+if (typeof API_BASE_URL === "string") {
+  API_BASE_URL = API_BASE_URL.trim();
+
+  if (API_BASE_URL.startsWith(":")) {
+    API_BASE_URL = `http://localhost${API_BASE_URL}`;
+  } else if (/^localhost(:|$)/.test(API_BASE_URL)) {
+    API_BASE_URL = `http://${API_BASE_URL}`;
+  }
+}
+
+// Debug: show which base URL the client is using (remove in production)
+console.debug("API_BASE_URL:", API_BASE_URL);
 
 let csrfToken = null;
 
