@@ -371,6 +371,16 @@ app.get("/api/auth/me", async (req, res) => {
   return res.json({ user: serializeUser(user) });
 });
 
+app.get("/api/auth/session", async (req, res) => {
+  const user = await getAuthenticatedUser(req);
+
+  if (!user) {
+    return res.json({ authenticated: false, user: null });
+  }
+
+  return res.json({ authenticated: true, user: serializeUser(user) });
+});
+
 app.post("/api/auth/signup", signupLimiter, async (req, res) => {
   const fullName = sanitizeText(req.body.fullName);
   const email = normalizeEmail(req.body.email);

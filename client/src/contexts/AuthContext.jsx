@@ -31,8 +31,8 @@ export const AuthProvider = ({ children }) => {
       setCsrfReady(true);
 
       try {
-        const { data } = await api.get("/api/auth/me");
-        setUser(data.user);
+        const { data } = await api.get("/api/auth/session");
+        setUser(data.authenticated ? data.user : null);
       } catch (sessionError) {
         if (!isUnauthorized(sessionError)) {
           setError("Unable to verify your session.");
